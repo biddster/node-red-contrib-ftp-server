@@ -1,0 +1,141 @@
+<!--
+The MIT License (MIT)
+
+Copyright (c) 2016 @biddster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('ftp-server', {
+        category: 'input',
+        color: '#f37a33',
+        defaults: {
+            name: {value: ''},
+            suspended: {value: false},
+            lat: {value: ''},
+            lon: {value: ''},
+            ontime: {value: '07:28'},
+            ontopic: {value: ''},
+            onpayload: {value: ''},
+            onoffset: {value: 0},
+            onrandomoffset: {value: 0},
+            offtime: {value: 'goldenHour'},
+            offtopic: {value: ''},
+            offpayload: {value: ''},
+            offoffset: {value: 0},
+            offrandomoffset: {value: 0}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'datetime.png',
+        label: function () {
+            return this.name || this.ontime + ' - ' + this.offtime;
+        },
+        paletteLabel: 'ftp server',
+        align: 'left',
+        oneditprepare: function () {
+            if (!$("#node-input-lat").val().trim() && !$("#node-input-lon").val().trim()) {
+                if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        $("#node-input-lat").val(Number(position.coords.latitude.toFixed(5)));
+                        $("#node-input-lon").val(Number(position.coords.longitude.toFixed(5)));
+                    });
+                }
+            }
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="schedex">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label style="margin-left: 100px; width: 70%">
+            <input type="checkbox" id="node-input-suspended" placeholder="" style="width: 20px; margin: 0">
+            Suspend scheduling
+        </label>
+    </div>
+    <hr>
+    <div class="form-row">
+		<label for="node-input-lat"><i class="fa fa-globe"></i> Latitude</label>
+		<input type="text" id="node-input-lat" placeholder="51.025">
+	</div>
+	<div class="form-row">
+		<label for="node-input-lon"><i class="fa fa-globe"></i> Longitude</label>
+		<input type="text" id="node-input-lon" placeholder="-1.4">
+	</div>
+
+	<hr>
+    <div class="form-row">
+        <label for="node-input-ontime"><i class="icon-tag"></i> On time</label>
+        <input type="text" id="node-input-ontime" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-ontopic"><i class="icon-tag"></i>On Topic</label>
+        <input type="text" id="node-input-ontopic" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-onpayload"><i class="icon-tag"></i>On Payload</label>
+        <input type="text" id="node-input-onpayload" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-onoffset"><i class="icon-tag"></i>On Offset</label>
+        <input type="number" id="node-input-onoffset" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label style="margin-left: 100px; width: 70%">
+            <input type="checkbox" id="node-input-onrandomoffset" placeholder="" style="width: 20px; margin: 0">
+            Use random on time within offset period
+        </label>
+    </div>
+
+    <hr>
+    <div class="form-row">
+        <label for="node-input-offtime"><i class="icon-tag"></i> Off time</label>
+        <input type="text" id="node-input-offtime" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-offtopic"><i class="icon-tag"></i>Off Topic</label>
+        <input type="text" id="node-input-offtopic" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-offpayload"><i class="icon-tag"></i>Off Payload</label>
+        <input type="text" id="node-input-offpayload" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-offoffset"><i class="icon-tag"></i>Off Offset</label>
+        <input type="number" id="node-input-offoffset" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label style="margin-left: 100px; width: 70%">
+            <input type="checkbox" id="node-input-offrandomoffset" placeholder="" style="width: 20px; margin: 0">
+            Use random off time within offset period
+        </label>
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="ftp-server">
+<!-- START -->
+<!-- END -->
+</script>
