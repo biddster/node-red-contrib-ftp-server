@@ -25,156 +25,96 @@
 module.exports = function (RED) {
     'use strict';
 
-    var moment = require('moment');
-    var SunCalc = require('suncalc');
-    var _ = require("lodash");
-    var fmt = 'YYYY-MM-DD HH:mm';
+    var _ = require('lodash'),
+        FtpServer = require('ftpd').FtpServer,
+        ip = require('ip');
 
-    RED.nodes.registerType('schedex', function (config) {
+    RED.nodes.registerType('ftp-server', function (config) {
         RED.nodes.createNode(this, config);
-        var node = this,
-            on = setupEvent('on', 'dot'),
-            off = setupEvent('off', 'ring');
-        on.inverse = off;
-        off.inverse = on;
 
-        node.on('input', function (msg) {
-            var handled = false;
-            if (_.isString(msg.payload)) {
-                // TODO - with these payload options, we can't support on and ontime etc.
-                if (msg.payload === 'on') {
-                    handled = true;
-                    send(on, true);
-                } else if (msg.payload === 'off') {
-                    handled = true;
-                    send(off, true);
-                }
-                if (msg.payload.indexOf('suspended') !== -1) {
-                    handled = true;
-                    var match = /.*suspended\s+(\S+)/.exec(msg.payload);
-                    config.suspended = (match[1] === 'true');
-                    bootstrap();
-                }
-                if (msg.payload.indexOf('ontime') !== -1) {
-                    handled = true;
-                    var match = /.*ontime\s+(\S+)/.exec(msg.payload);
-                    on.time = match[1];
-                    bootstrap();
-                }
-                if (msg.payload.indexOf('offtime') !== -1) {
-                    handled = true;
-                    var match = /.*offtime\s+(\S+)/.exec(msg.payload);
-                    off.time = match[1];
-                    bootstrap();
-                }
-            } else {
-                if (msg.payload.hasOwnProperty('suspended')) {
-                    handled = true;
-                    config.suspended = !!msg.payload.suspended;
-                    bootstrap();
-                }
-                if (msg.payload.hasOwnProperty('ontime')) {
-                    handled = true;
-                    on.time = msg.payload.ontime;
-                    bootstrap();
-                }
-                if (msg.payload.hasOwnProperty('offtime')) {
-                    handled = true;
-                    off.time = msg.payload.offtime;
-                    bootstrap();
-                }
-            }
-            if (!handled) {
-                node.status({fill: 'red', shape: 'dot', text: 'Unsupported input'});
-            }
+        var node = this;
+
+        var address = ip.address();
+        node.log('Starting ftp server using ip: ' + address);
+
+        var server = new FtpServer(address, {
+            getInitialCwd: function () {
+                return '/';
+            },
+            getRoot: function () {
+                return process.cwd();
+            },
+            useWriteFile: true,
+            useReadFile: true
         });
 
-        node.on('close', suspend);
+        server.on('client:connected', function (connection) {
+            var client = connection.socket.remoteAddress + ':' + connection.socket.remotePort,
+                identifier = '';
+            node.log('Client %s connected', client);
 
-        function setupEvent(eventName, shape) {
-            var filtered = _.pickBy(config, function (value, key) {
-                return key && key.indexOf(eventName) === 0;
-            });
-            var event = _.mapKeys(filtered, function (value, key) {
-                return key.substring(eventName.length).toLowerCase();
-            });
-            event.name = eventName.toUpperCase();
-            event.shape = shape;
-            event.callback = function () {
-                send(event);
-                schedule(event);
-            };
-            return event;
-        }
-
-        function send(event, manual) {
-            node.send({topic: event.topic, payload: event.payload});
-            node.status({
-                fill: manual ? 'blue' : 'green',
-                shape: event.shape,
-                text: event.name + (manual ? ' manual' : ' auto') + (config.suspended ? ' - scheduling suspended' : (' until ' + event.inverse.moment.format(fmt)))
-            });
-        }
-
-        function schedule(event, isInitial) {
-            var now = moment();
-            var matches = new RegExp(/(\d+):(\d+)/).exec(event.time);
-            if (matches && matches.length) {
-                // Don't use 'now' here as hour and minute mutate the moment.
-                event.moment = moment().hour(matches[1]).minute(matches[2]);
-            } else {
-                var sunCalcTimes = SunCalc.getTimes(new Date(), config.lat, config.lon);
-                var date = sunCalcTimes[event.time];
-                if (date) {
-                    event.moment = moment(date);
+            connection.on('command:user', function (user, success, failure) {
+                if (!user) {
+                    return failure();
                 }
-            }
-            if (event.moment) {
-                event.moment.seconds(0);
-                if (!isInitial || isInitial && now.isAfter(event.moment)) {
-                    event.moment.add(1, 'day');
+                identifier = user;
+                success();
+            });
+
+            connection.on('command:pass', function (pass, success, failure) {
+                if (!pass) {
+                    return failure();
                 }
-                if (event.offset) {
-                    var adjustment = event.offset;
-                    if (event.randomoffset) {
-                        adjustment = event.offset * Math.random();
+                success(identifier, {
+                    writeFile: function (id, file, callback) {
+                        node.log(String.fromCharCode.apply(null, file));
+                        node.send({
+                            topic: id,
+                            payload: file
+                        });
+                        callback();
+                    },
+                    readFile: noop(),
+                    unlink: noop(),
+                    readdir: noop(),
+                    mkdir: noop(),
+                    open: noop(),
+                    close: noop(),
+                    rmdir: noop(),
+                    rename: noop(),
+                    stat: function () {
+                        _.nthArg(-1)(null, {
+                            mode: '0777',
+                            isDirectory: function () {
+                                return true;
+                            },
+                            size: 1,
+                            mtime: 1
+                        });
                     }
-                    event.moment.add(adjustment, 'minutes');
-                }
+                });
+            });
 
-                var delay = event.moment.diff(now);
-                if (event.timeout) {
-                    clearTimeout(event.timeout);
-                }
-                event.timeout = setTimeout(event.callback, delay);
-            } else {
-                node.status({fill: 'red', shape: 'dot', text: 'Invalid time: ' + event.time});
-            }
-        }
+            connection.on('close', function () {
+                node.log('client %s disconnected', client);
+            });
 
-        function suspend() {
-            clearTimeout(on.timeout);
-            clearTimeout(off.timeout);
-            node.status({fill: 'grey', shape: 'dot', text: 'Scheduling suspended - manual mode only'});
-        }
+            connection.on('error', function (error) {
+                node.error('client %s had an error: %s', client, error.toString());
+            });
+        });
 
-        function resume() {
-            schedule(on, true);
-            schedule(off, true);
-            var firstEvent = on.moment.isBefore(off.moment) ? on : off;
-            var message = firstEvent.name + ' ' + firstEvent.moment.format(fmt) + ', ' +
-                firstEvent.inverse.name + ' ' + firstEvent.inverse.moment.format(fmt);
-            node.status({fill: 'yellow', shape: 'dot', text: message});
-        }
+        server.listen(7002);
 
-        function bootstrap() {
-            if (config.suspended) {
-                suspend();
-            } else {
-                resume();
-            }
-        }
+        node.on('close', function () {
+            server.close();
+        });
 
-        bootstrap();
     });
+
+    function noop() {
+        return function () {
+            _.nthArg(-1)(new Error('Not implemented'));
+        };
+    }
 };

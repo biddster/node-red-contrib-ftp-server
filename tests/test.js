@@ -24,11 +24,23 @@
 
 "use strict";
 var assert = require('chai').assert;
+var PromiseFtp = require('promise-ftp');
 var mock = require('node-red-contrib-mock-node');
 var nodeRedModule = require('../index.js');
 
 describe('ftp-server', function () {
-    it('should be tested', function () {
-        // TODO - actually do something here.
+    it('should be tested', function (done) {
+        var node = mock(nodeRedModule, {});
+        console.log('Server should be running.');
+
+        var ftp = new PromiseFtp();
+        ftp.connect({host: 'localhost', user: 'user', password: 'password', port: 7002})
+            .then(function (serverMessage) {
+                return ftp.put('File content', 'test.remote-copy.txt');
+            })
+            .then(function () {
+                done();
+                return ftp.end();
+            });
     });
 });
