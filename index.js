@@ -39,15 +39,16 @@ module.exports = function (RED) {
 
         var server = new FtpServer(address, {
             getInitialCwd: function () {
-                return '/';
+                return '';
             },
             getRoot: function () {
-                return process.cwd();
+                return '';
             },
             useWriteFile: true,
             useReadFile: true
         });
 
+        // Based upon this https://github.com/stjohnjohnson/mqtt-camera-ftpd/blob/master/server.js
         server.on('client:connected', function (connection) {
             var remoteClient = connection.socket.remoteAddress + ':' + connection.socket.remotePort,
                 usr = '';
