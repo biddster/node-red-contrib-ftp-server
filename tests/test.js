@@ -23,14 +23,18 @@
  */
 
 "use strict";
-var assert = require('chai').assert;
+var assert = require('assert');
 var PromiseFtp = require('promise-ftp');
 var mock = require('node-red-contrib-mock-node');
 var nodeRedModule = require('../index.js');
 
 describe('ftp-server', function () {
     it('should be tested', function (done) {
-        var node = mock(nodeRedModule, {});
+        var node = mock(nodeRedModule, {
+            username: 'user',
+            password: 'password',
+            port: 7002
+        });
         console.log('Server should be running.');
 
         var ftp = new PromiseFtp();
@@ -39,6 +43,8 @@ describe('ftp-server', function () {
                 return ftp.put('File content', 'test.remote-copy.txt');
             })
             .then(function () {
+                var msg = node.sent(0);
+                // assert.strictEqual('File content', msg.payload);
                 done();
                 return ftp.end();
             });

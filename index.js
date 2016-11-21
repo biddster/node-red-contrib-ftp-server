@@ -53,50 +53,26 @@ module.exports = function (RED) {
                 identifier = '';
             node.log('Client %s connected', client);
 
+
             connection.on('command:user', function (user, success, failure) {
-                if (!user) {
+                if (!user || user !== config.username) {
                     return failure();
                 }
                 identifier = user;
+                node.status({fill: 'green', shape: 'dot', text: user});
                 success();
             });
 
             connection.on('command:pass', function (pass, success, failure) {
-                if (!pass) {
+                if (!pass || pass !== config.password) {
                     return failure();
                 }
-                success(identifier, {
-                    writeFile: function (id, file, callback) {
-                        node.log(String.fromCharCode.apply(null, file));
-                        node.send({
-                            topic: id,
-                            payload: file
-                        });
-                        callback();
-                    },
-                    readFile: noop(),
-                    unlink: noop(),
-                    readdir: noop(),
-                    mkdir: noop(),
-                    open: noop(),
-                    close: noop(),
-                    rmdir: noop(),
-                    rename: noop(),
-                    stat: function () {
-                        _.nthArg(-1)(null, {
-                            mode: '0777',
-                            isDirectory: function () {
-                                return true;
-                            },
-                            size: 1,
-                            mtime: 1
-                        });
-                    }
-                });
+                success(identifier, newFSHandler());
             });
 
             connection.on('close', function () {
                 node.log('client %s disconnected', client);
+                indicateIdle();
             });
 
             connection.on('error', function (error) {
@@ -104,17 +80,49 @@ module.exports = function (RED) {
             });
         });
 
-        server.listen(7002);
+        server.listen(config.port);
 
         node.on('close', function () {
             server.close();
         });
 
-    });
+        indicateIdle();
 
-    function noop() {
-        return function () {
-            _.nthArg(-1)(new Error('Not implemented'));
-        };
-    }
+        function indicateIdle() {
+            node.status({fill: 'green', shape: 'ring', text: address + ':' + config.port});
+        }
+
+        function newFSHandler() {
+            var handler = {
+                writeFile: function (id, file, callback) {
+                    node.log(String.fromCharCode.apply(null, file));
+                    node.send({
+                        topic: id,
+                        payload: file
+                    });
+                    callback();
+                },
+                stat: function () {
+                    _.nthArg(-1)(null, {
+                        mode: '0777',
+                        isDirectory: function () {
+                            return true;
+                        },
+                        size: 1,
+                        mtime: 1
+                    });
+                },
+                readdir: function (dir, callback) {
+                    callback(null, []);
+                }
+            };
+            ['readFile', 'unlink', 'mkdir', 'open', 'close', 'rmdir', 'rename'].forEach(function (method) {
+                handler[method] = function () {
+                    node.log(method + ' called');
+                    _.nthArg(-1)(new Error(method + ' not implemented'));
+                }
+            });
+            return handler;
+        }
+    });
 };
