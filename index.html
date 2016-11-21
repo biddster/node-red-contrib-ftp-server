@@ -28,114 +28,45 @@ THE SOFTWARE.
         color: '#f37a33',
         defaults: {
             name: {value: ''},
-            suspended: {value: false},
-            lat: {value: ''},
-            lon: {value: ''},
-            ontime: {value: '07:28'},
-            ontopic: {value: ''},
-            onpayload: {value: ''},
-            onoffset: {value: 0},
-            onrandomoffset: {value: 0},
-            offtime: {value: 'goldenHour'},
-            offtopic: {value: ''},
-            offpayload: {value: ''},
-            offoffset: {value: 0},
-            offrandomoffset: {value: 0}
+            port: {value: 7021}
         },
-        inputs: 1,
+        credentials: {
+            username: {type: 'text'},
+            password: {type: 'password'}
+        },
+        inputs: 0,
         outputs: 1,
-        icon: 'datetime.png',
+        icon: 'ftp.png',
         label: function () {
-            return this.name || this.ontime + ' - ' + this.offtime;
+            return this.name || 'ftp server';
         },
         paletteLabel: 'ftp server',
-        align: 'left',
-        oneditprepare: function () {
-            if (!$("#node-input-lat").val().trim() && !$("#node-input-lon").val().trim()) {
-                if ('geolocation' in navigator) {
-                    navigator.geolocation.getCurrentPosition(function (position) {
-                        $("#node-input-lat").val(Number(position.coords.latitude.toFixed(5)));
-                        $("#node-input-lon").val(Number(position.coords.longitude.toFixed(5)));
-                    });
-                }
-            }
-        }
+        align: 'left'
     });
 </script>
 
-<script type="text/x-red" data-template-name="schedex">
+<script type="text/x-red" data-template-name="ftp-server">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label style="margin-left: 100px; width: 70%">
-            <input type="checkbox" id="node-input-suspended" placeholder="" style="width: 20px; margin: 0">
-            Suspend scheduling
-        </label>
-    </div>
-    <hr>
-    <div class="form-row">
-		<label for="node-input-lat"><i class="fa fa-globe"></i> Latitude</label>
-		<input type="text" id="node-input-lat" placeholder="51.025">
-	</div>
-	<div class="form-row">
-		<label for="node-input-lon"><i class="fa fa-globe"></i> Longitude</label>
-		<input type="text" id="node-input-lon" placeholder="-1.4">
-	</div>
-
-	<hr>
-    <div class="form-row">
-        <label for="node-input-ontime"><i class="icon-tag"></i> On time</label>
-        <input type="text" id="node-input-ontime" placeholder="">
+        <label for="node-input-port"><i class="icon-tag"></i>Port</label>
+        <input type="number" id="node-input-port" placeholder="">
     </div>
     <div class="form-row">
-        <label for="node-input-ontopic"><i class="icon-tag"></i>On Topic</label>
-        <input type="text" id="node-input-ontopic" placeholder="">
+        <label for="node-input-username"><i class="icon-tag"></i>Username</label>
+        <input type="text" id="node-input-username" placeholder="">
     </div>
     <div class="form-row">
-        <label for="node-input-onpayload"><i class="icon-tag"></i>On Payload</label>
-        <input type="text" id="node-input-onpayload" placeholder="">
+        <label for="node-input-password"><i class="icon-tag"></i>Password</label>
+        <input type="password" id="node-input-password" placeholder="">
     </div>
-    <div class="form-row">
-        <label for="node-input-onoffset"><i class="icon-tag"></i>On Offset</label>
-        <input type="number" id="node-input-onoffset" placeholder="0">
-    </div>
-    <div class="form-row">
-        <label style="margin-left: 100px; width: 70%">
-            <input type="checkbox" id="node-input-onrandomoffset" placeholder="" style="width: 20px; margin: 0">
-            Use random on time within offset period
-        </label>
-    </div>
-
-    <hr>
-    <div class="form-row">
-        <label for="node-input-offtime"><i class="icon-tag"></i> Off time</label>
-        <input type="text" id="node-input-offtime" placeholder="">
-    </div>
-    <div class="form-row">
-        <label for="node-input-offtopic"><i class="icon-tag"></i>Off Topic</label>
-        <input type="text" id="node-input-offtopic" placeholder="">
-    </div>
-    <div class="form-row">
-        <label for="node-input-offpayload"><i class="icon-tag"></i>Off Payload</label>
-        <input type="text" id="node-input-offpayload" placeholder="">
-    </div>
-    <div class="form-row">
-        <label for="node-input-offoffset"><i class="icon-tag"></i>Off Offset</label>
-        <input type="number" id="node-input-offoffset" placeholder="0">
-    </div>
-    <div class="form-row">
-        <label style="margin-left: 100px; width: 70%">
-            <input type="checkbox" id="node-input-offrandomoffset" placeholder="" style="width: 20px; margin: 0">
-            Use random off time within offset period
-        </label>
-    </div>
-
 
 </script>
 
 <script type="text/x-red" data-help-name="ftp-server">
 <!-- START -->
 <!-- END -->
+
 </script>

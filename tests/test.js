@@ -22,13 +22,36 @@
  THE SOFTWARE.
  */
 
-"use strict";
-var assert = require('chai').assert;
+'use strict';
+var assert = require('assert');
+var PromiseFtp = require('promise-ftp');
 var mock = require('node-red-contrib-mock-node');
 var nodeRedModule = require('../index.js');
 
 describe('ftp-server', function () {
-    it('should be tested', function () {
-        // TODO - actually do something here.
+    it('should be tested', function (done) {
+        var node = mock(nodeRedModule, {
+            port: 7002
+        }, {
+            username: 'uname',
+            password: 'pword'
+        });
+
+        var ftp = new PromiseFtp();
+        ftp.connect({host: 'localhost', user: 'uname', password: 'pword', port: 7002})
+            .then(function (serverMessage) {
+                return ftp.put('File content', 'test.remote-copy.txt');
+            })
+            .then(function () {
+                var msg = node.sent(0);
+                assert.strictEqual('File content', String.fromCharCode.apply(null, msg.payload));
+                assert.strictEqual('/test.remote-copy.txt', msg.topic);
+                return ftp.end().then(done);
+            })
+            .catch(function (error) {
+                return ftp.end().then(function () {
+                    done(error);
+                });
+            });
     });
 });
