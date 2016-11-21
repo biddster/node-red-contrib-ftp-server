@@ -28,9 +28,11 @@ THE SOFTWARE.
         color: '#f37a33',
         defaults: {
             name: {value: ''},
-            port: {value: 7021},
-            username: {value: ''},
-            password: {value: ''}
+            port: {value: 7021}
+        },
+        credentials: {
+            username: {type: 'text'},
+            password: {type: 'password'}
         },
         inputs: 0,
         outputs: 1,
@@ -60,9 +62,11 @@ THE SOFTWARE.
         <label for="node-input-password"><i class="icon-tag"></i>Password</label>
         <input type="password" id="node-input-password" placeholder="">
     </div>
+
 </script>
 
 <script type="text/x-red" data-help-name="ftp-server">
 <!-- START -->
 <!-- END -->
+
 </script>
