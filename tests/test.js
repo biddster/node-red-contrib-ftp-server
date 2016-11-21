@@ -22,7 +22,7 @@
  THE SOFTWARE.
  */
 
-"use strict";
+'use strict';
 var assert = require('assert');
 var PromiseFtp = require('promise-ftp');
 var mock = require('node-red-contrib-mock-node');
@@ -36,7 +36,6 @@ describe('ftp-server', function () {
             username: 'uname',
             password: 'pword'
         });
-        console.log('Server should be running.');
 
         var ftp = new PromiseFtp();
         ftp.connect({host: 'localhost', user: 'uname', password: 'pword', port: 7002})
@@ -45,9 +44,13 @@ describe('ftp-server', function () {
             })
             .then(function () {
                 var msg = node.sent(0);
-                // assert.strictEqual('File content', msg.payload);
-                done();
-                return ftp.end();
+                assert.strictEqual('File content', String.fromCharCode.apply(null, msg.payload));
+                return ftp.end().then(done);
+            })
+            .catch(function (error) {
+                return ftp.end().then(function () {
+                    done(error);
+                });
             });
     });
 });
