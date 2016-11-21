@@ -31,14 +31,15 @@ var nodeRedModule = require('../index.js');
 describe('ftp-server', function () {
     it('should be tested', function (done) {
         var node = mock(nodeRedModule, {
-            username: 'user',
-            password: 'password',
             port: 7002
+        }, {
+            username: 'uname',
+            password: 'pword'
         });
         console.log('Server should be running.');
 
         var ftp = new PromiseFtp();
-        ftp.connect({host: 'localhost', user: 'user', password: 'password', port: 7002})
+        ftp.connect({host: 'localhost', user: 'uname', password: 'pword', port: 7002})
             .then(function (serverMessage) {
                 return ftp.put('File content', 'test.remote-copy.txt');
             })
