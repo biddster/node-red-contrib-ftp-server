@@ -15,6 +15,10 @@
   "bugs": {
     "url": "https://github.com/biddster/node-red-contrib-ftp-server/issues"
   },
+  "keywords": [
+    "node-red",
+    "ftpd"
+  ],
   "node-red": {
     "nodes": {
       "ftp-server": "index.js"
