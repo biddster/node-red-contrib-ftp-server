@@ -62,11 +62,37 @@ THE SOFTWARE.
         <label for="node-input-password"><i class="icon-tag"></i>Password</label>
         <input type="password" id="node-input-password" placeholder="">
     </div>
-
 </script>
 
 <script type="text/x-red" data-help-name="ftp-server">
 <!-- START -->
+<h1 id="ftp-server">FTP Server</h1>
+<p>FTP Server for Node-RED that currently only supports putting files. Uploaded files are emitted from this node via<br><code>msg.payload</code> of type Buffer.</p>
+<p>Written for my Dad so he can wire his IP camera&#39;s motion detection directly into Node-RED. </p>
+<h1 id="installation">Installation</h1>
+<pre><code>$ cd ~/.node-red
+$ npm install node-red-contrib-ftp-server
+</code></pre><h1 id="configure-node-red">Configure Node-RED</h1>
+<p>Drag the FTP Server node into your workspace and double click to configure:</p>
+<ul>
+<li>Enter a free port on your Node-RED server</li>
+<li>Enter a username of your choosing</li>
+<li>Enter a password of your choosing</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/NodeRED.png" alt="NR ftp settings"></p>
+<h1 id="configure-a-device-to-use-your-node-red-ftp-server">Configure a device to use your Node-RED FTP server</h1>
+<p>Here&#39;s an example of configuring a Foscam IP camera to upload images into Node-RED:</p>
+<ul>
+<li>Enter the IP address of your Node-RED server as the FTP server address</li>
+<li>Enter the port, username and password that you chose when you configured the FTP node in Node-RED above.</li>
+</ul>
+<p>Now you can configure the motion settings of your IP camera to upload images to FTP. </p>
+<p>The images are then emitted from this node as a buffer via <code>msg.payload</code>.</p>
+<p><img src="https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/Foscam.png" alt="Foscam ftp settings"></p>
+<h1 id="todo">TODO</h1>
+<ul>
+<li>TLS support</li>
+<li>Proper testing</li>
+</ul>
 <!-- END -->
-
 </script>
