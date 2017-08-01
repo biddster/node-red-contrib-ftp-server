@@ -53,7 +53,11 @@ module.exports = function (RED) {
             var remoteClient = connection.socket.remoteAddress + ':' + connection.socket.remotePort,
                 usr = '';
             node.log('Client connected: ' + remoteClient);
-            node.status({fill: 'green', shape: 'ring', text: remoteClient});
+            node.status({
+                fill: 'green',
+                shape: 'ring',
+                text: remoteClient
+            });
 
 
             connection.on('command:user', function (user, success, failure) {
@@ -69,7 +73,11 @@ module.exports = function (RED) {
                 if (!pass || pass !== node.credentials.password) {
                     return failure();
                 }
-                node.status({fill: 'green', shape: 'dot', text: remoteClient});
+                node.status({
+                    fill: 'green',
+                    shape: 'dot',
+                    text: remoteClient
+                });
                 success(usr, newFSHandler());
             });
 
@@ -95,7 +103,11 @@ module.exports = function (RED) {
         // FUNCTIONS
 
         function indicateIdle() {
-            node.status({fill: 'blue', shape: 'ring', text: address + ':' + config.port + ' - IDLE'});
+            node.status({
+                fill: 'blue',
+                shape: 'ring',
+                text: address + ':' + config.port + ' - IDLE'
+            });
         }
 
         function newFSHandler() {
@@ -122,7 +134,13 @@ module.exports = function (RED) {
                     callback(null, []);
                 }
             };
-            ['readFile', 'unlink', 'mkdir', 'open', 'close', 'rmdir', 'rename'].forEach(function (method) {
+            ['unlink', 'mkdir', 'open', 'close', 'rmdir', 'rename'].forEach(function (method) {
+                handler[method] = function (arg) {
+                    node.log(method + ' called: ' + arg);
+                    arguments[arguments.length - 1]();
+                }
+            });
+            ['readFile'].forEach(function (method) {
                 handler[method] = function () {
                     node.log(method + ' called');
                     _.nthArg(-1)(new Error(method + ' not implemented'));
@@ -132,8 +150,12 @@ module.exports = function (RED) {
         }
     }, {
         credentials: {
-            username: {type: 'text'},
-            password: {type: 'password'}
+            username: {
+                type: 'text'
+            },
+            password: {
+                type: 'password'
+            }
         }
     });
 };
