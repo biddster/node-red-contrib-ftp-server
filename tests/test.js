@@ -38,8 +38,16 @@ describe('ftp-server', function () {
         });
 
         var ftp = new PromiseFtp();
-        ftp.connect({host: 'localhost', user: 'uname', password: 'pword', port: 7002})
-            .then(function (serverMessage) {
+        ftp.connect({
+                host: 'localhost',
+                user: 'uname',
+                password: 'pword',
+                port: 7002
+            })
+            .then(function () {
+                return ftp.mkdir('20170801');
+            })
+            .then(function () {
                 return ftp.put('File content', 'test.remote-copy.txt');
             })
             .then(function () {
