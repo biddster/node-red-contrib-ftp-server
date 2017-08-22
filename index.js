@@ -27,15 +27,19 @@ module.exports = function (RED) {
 
     var _ = require('lodash'),
         FtpServer = require('ftpd').FtpServer,
-        ip = require('ip');
+        ip = require('ip'),
+        path = require('path'),
+        memfs = require('memfs');
 
     RED.nodes.registerType('ftp-server', function (config) {
         RED.nodes.createNode(this, config);
 
-        var node = this;
+        var node = this,
+            debug = typeof v8debug === 'object' || (/--debug|--inspect/).test(process.execArgv.join(' ')),
+            log = debug ? node.log : _.noop,
+            address = ip.address();
 
-        var address = ip.address();
-        node.log('Starting ftp server using ip: ' + address);
+        log('Starting ftp server using ip: ' + address);
 
         var server = new FtpServer(address, {
             getInitialCwd: function () {
@@ -52,13 +56,12 @@ module.exports = function (RED) {
         server.on('client:connected', function (connection) {
             var remoteClient = connection.socket.remoteAddress + ':' + connection.socket.remotePort,
                 usr = '';
-            node.log('Client connected: ' + remoteClient);
+            log('Client connected: ' + remoteClient);
             node.status({
                 fill: 'green',
                 shape: 'ring',
                 text: remoteClient
             });
-
 
             connection.on('command:user', function (user, success, failure) {
                 if (!user || user !== node.credentials.username) {
@@ -83,7 +86,7 @@ module.exports = function (RED) {
 
             // TODO connection.on('close' ...) doesn't work
             connection._onClose = function () {
-                node.log('Client disconnected: ' + remoteClient);
+                log('Client disconnected: ' + remoteClient);
                 indicateIdle();
             };
 
@@ -111,39 +114,32 @@ module.exports = function (RED) {
         }
 
         function newFSHandler() {
+            var vol = memfs.Volume.fromJSON({});
             var handler = {
-                writeFile: function (id, file, callback) {
-                    node.log(String.fromCharCode.apply(null, file));
+                writeFile: function (fileName, file, callback) {
+                    log('writeFile: ' + fileName);
                     node.send({
-                        topic: id,
+                        topic: fileName,
                         payload: file
                     });
-                    callback();
-                },
-                stat: function () {
-                    _.nthArg(-1)(null, {
-                        mode: '0777',
-                        isDirectory: function () {
-                            return true;
-                        },
-                        size: 1,
-                        mtime: 1
-                    });
-                },
-                readdir: function (dir, callback) {
-                    callback(null, []);
+                    vol.writeFile(fileName, file, callback);
+                    // Keep our memory usage as low as possible for devices like an older Pi by unlinking 
+                    // (deleting) files after 5 seconds.
+                    setTimeout(function () {
+                        vol.unlink(fileName, function (err) {
+                            if (err && err.code !== 'ENOENT') {
+                                node.error(err);
+                            } else {
+                                log('Unlinked: ' + fileName);
+                            }
+                        });
+                    }, 5000);
                 }
             };
-            ['unlink', 'mkdir', 'open', 'close', 'rmdir', 'rename'].forEach(function (method) {
+            ['open', 'close', 'rename', 'unlink', 'stat', 'readdir', 'mkdir', 'rmdir', 'readFile'].forEach(function (method) {
                 handler[method] = function (arg) {
-                    node.log(method + ' called: ' + arg);
-                    arguments[arguments.length - 1]();
-                }
-            });
-            ['readFile'].forEach(function (method) {
-                handler[method] = function () {
-                    node.log(method + ' called');
-                    _.nthArg(-1)(new Error(method + ' not implemented'));
+                    log(method + ': ' + arg);
+                    vol[method].apply(vol, arguments);
                 }
             });
             return handler;
