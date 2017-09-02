@@ -41,7 +41,7 @@ module.exports = function (RED) {
             };
 
         function getGlobalConfig() {
-            return _.assign(globalConfig, node.name && node.context().global.get(node.name) || node.context().global.get('ftp-server'));
+            return _.assign(globalConfig, node.context().global.get('ftp-server'));
         }
 
         function debug() {
