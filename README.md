@@ -33,6 +33,12 @@ The images are then emitted from this node as a buffer via `msg.payload`.
  
 ![Foscam ftp settings](https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/Foscam.png)
 
+### Enabling extra debugging
+
+Install `node-red-contrib-config` and drag a config node into your workspace. Configure the node to set a global variable called `ftp-server` 
+with a JSON value of `{"debug": true}`. Also make sure that the config tickbox for `active` is unchecked. Redeploy. Now click the button on the config node. 
+This will trigger all instances of `ftp-server` to write extra logging to the os syslog next time they're invoked.
+
 # TODO
 
 - TLS support
