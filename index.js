@@ -35,11 +35,20 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
 
         var node = this,
-            debug = typeof v8debug === 'object' || (/--debug|--inspect/).test(process.execArgv.join(' ')),
-            log = debug ? node.log : _.noop,
-            address = ip.address();
+            address = ip.address(),
+            globalConfig = {
+                debug: false
+            };
 
-        log('Starting ftp server using ip: ' + address);
+        function getGlobalConfig() {
+            return _.assign(globalConfig, node.context().global.get('ftp-server'));
+        }
+
+        function debug() {
+            if (getGlobalConfig().debug) node.log.apply(node, arguments);
+        }
+
+        debug('Starting ftp server: ' + address + ':' + config.port);
 
         var server = new FtpServer(address, {
             getInitialCwd: function () {
@@ -56,7 +65,7 @@ module.exports = function (RED) {
         server.on('client:connected', function (connection) {
             var remoteClient = connection.socket.remoteAddress + ':' + connection.socket.remotePort,
                 usr = '';
-            log('Client connected: ' + remoteClient);
+            debug('Remote connection: ' + remoteClient);
             node.status({
                 fill: 'green',
                 shape: 'ring',
@@ -65,15 +74,28 @@ module.exports = function (RED) {
 
             connection.on('command:user', function (user, success, failure) {
                 if (!user || user !== node.credentials.username) {
+                    debug('Invalid username: ' + user);
+                    node.status({
+                        fill: 'red',
+                        shape: 'dot',
+                        text: 'Invalid username: ' + user
+                    });
                     return failure();
                 }
                 usr = user;
                 remoteClient += ' - ' + usr;
+                debug('Connecting as user: ' + usr);
                 success();
             });
 
             connection.on('command:pass', function (pass, success, failure) {
                 if (!pass || pass !== node.credentials.password) {
+                    debug('Invalid password for user: ' + usr);
+                    node.status({
+                        fill: 'red',
+                        shape: 'dot',
+                        text: 'Invalid password for user: ' + usr
+                    });
                     return failure();
                 }
                 node.status({
@@ -81,23 +103,30 @@ module.exports = function (RED) {
                     shape: 'dot',
                     text: remoteClient
                 });
+                debug('Connected as user: ' + usr);
                 success(usr, newFSHandler());
             });
 
             // TODO connection.on('close' ...) doesn't work
             connection._onClose = function () {
-                log('Client disconnected: ' + remoteClient);
+                debug('Client disconnected: ' + remoteClient);
                 indicateIdle();
             };
 
             connection.on('error', function (error) {
                 node.error('remoteClient %s had an error: %s', remoteClient, error.toString());
+                node.status({
+                    fill: 'red',
+                    shape: 'dot',
+                    text: error.toString()
+                });
             });
         });
 
         server.listen(config.port);
 
         node.on('close', function () {
+            debug('Closing down ftp server');
             server.close();
         });
 
@@ -117,7 +146,7 @@ module.exports = function (RED) {
             var vol = memfs.Volume.fromJSON({});
             var handler = {
                 writeFile: function (fileName, file, callback) {
-                    log('writeFile: ' + fileName);
+                    debug('writeFile: ' + fileName);
                     node.send({
                         topic: fileName,
                         payload: file
@@ -130,7 +159,7 @@ module.exports = function (RED) {
                             if (err && err.code !== 'ENOENT') {
                                 node.error(err);
                             } else {
-                                log('Unlinked: ' + fileName);
+                                debug('Unlinked: ' + fileName);
                             }
                         });
                     }, 5000);
@@ -138,7 +167,7 @@ module.exports = function (RED) {
             };
             ['open', 'close', 'rename', 'unlink', 'stat', 'readdir', 'mkdir', 'rmdir', 'readFile'].forEach(function (method) {
                 handler[method] = function (arg) {
-                    log(method + ': ' + arg);
+                    debug(method + ': ' + arg);
                     vol[method].apply(vol, arguments);
                 }
             });
