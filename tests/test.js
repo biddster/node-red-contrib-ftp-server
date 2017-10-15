@@ -40,6 +40,7 @@ describe('ftp-server', function() {
                 password: 'pword'
             }
         );
+        node.context().global.set('ftp-server', { debug: true });
 
         var ftp = new PromiseFtp();
         ftp
@@ -49,11 +50,18 @@ describe('ftp-server', function() {
                 password: 'pword',
                 port: 7002
             })
+            // This rather odd sequencing is to match the observed behaviours of some IP cameras.
+            .then(function() {
+                return ftp.cwd('/20171007/images/');
+            })
+            .then(function() {
+                return ftp.cwd('/20171007/images/');
+            })
             .then(function() {
                 return ftp.mkdir('/20171007/images/');
             })
             .then(function() {
-                return ftp.cwd('/20171007/images/');
+                return ftp.mkdir('/20171007/images/');
             })
             .then(function() {
                 return ftp.put('File content', 'test.remote-copy.txt');

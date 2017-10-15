@@ -173,17 +173,13 @@ module.exports = function(RED) {
                     },
                     stat: function(file, callback) {
                         // It streamlines the process of uploading images if we respond that every directory
-                        // exists and silently create it when it doesn't.
-                        vol.stat(file, function(err, stat) {
-                            if (!err) {
-                                return callback(null, stat);
+                        // exists and silently create the directory when it doesn't.
+                        debug('stat: ' + file);
+                        vol.mkdirp(file, function(err1) {
+                            if (err1) {
+                                return callback(err1);
                             }
-                            vol.mkdirp(file, function(err1, data) {
-                                if (err1) {
-                                    return callback(err1);
-                                }
-                                vol.stat(file, callback);
-                            });
+                            vol.stat(file, callback);
                         });
                     },
                     mkdir: function(dir, opts, callback) {
