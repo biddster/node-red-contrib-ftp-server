@@ -50,7 +50,7 @@
         "extends": "eslint-config-biddster/es6-node"
     },
     "dependencies": {
-        "ftpd": "^0.2.15",
+        "ftpd": "git+https://github.com/biddster/nodeftpd.git",
         "ip": "^1.1.4",
         "lodash": "^4.17.2",
         "memfs": "^2.1.0"
