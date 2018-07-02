@@ -152,7 +152,7 @@ module.exports = function(RED) {
             function newFSHandler() {
                 var vol = memfs.Volume.fromJSON({});
                 var handler = {
-                    writeFile: function(fileName, file, callback) {
+                    writeFile: function(fileName, file, options, callback) {
                         debug('writeFile: ' + fileName);
                         node.send({
                             topic: fileName,
@@ -187,20 +187,14 @@ module.exports = function(RED) {
                         vol.mkdirp(dir, callback);
                     }
                 };
-                [
-                    'open',
-                    'close',
-                    'rename',
-                    'unlink',
-                    'readdir',
-                    'rmdir',
-                    'readFile'
-                ].forEach(function(method) {
-                    handler[method] = function(arg) {
-                        debug(method + ': ' + arg);
-                        vol[method].apply(vol, arguments);
-                    };
-                });
+                ['open', 'close', 'rename', 'unlink', 'readdir', 'rmdir', 'readFile'].forEach(
+                    function(method) {
+                        handler[method] = function(arg) {
+                            debug(method + ': ' + arg);
+                            vol[method].apply(vol, arguments);
+                        };
+                    }
+                );
                 return handler;
             }
         },

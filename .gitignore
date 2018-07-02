@@ -3,4 +3,5 @@ node_modules
 .idea
 .vscode
 /*.tgz
-
+coverage
+.nyc_output
