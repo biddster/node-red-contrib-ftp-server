@@ -37,10 +37,14 @@ module.exports = function(RED) {
             RED.nodes.createNode(this, config);
 
             var node = this,
-                address = ip.address(),
+                address = config.ip || ip.address(),
                 globalConfig = {
                     debug: false
                 };
+
+            var pasvPortRange = config.passiveportrange.split('-');
+            var pasvPortRangeStart = (pasvPortRange[0] || "").trim() || undefined;
+            var pasvPortRangeEnd = (pasvPortRange[1] || "").trim() || pasvPortRangeStart;
 
             function getGlobalConfig() {
                 return _.assign(globalConfig, node.context().global.get('ftp-server'));
@@ -60,8 +64,14 @@ module.exports = function(RED) {
                     return '';
                 },
                 useWriteFile: true,
-                useReadFile: true
+                useReadFile: true,
+                pasvPortRangeStart: pasvPortRangeStart,
+                pasvPortRangeEnd: pasvPortRangeEnd
             });
+
+            server._logIf = function(verbosity, message, conn) {
+                debug('ftpd: ' + message);
+            };
 
             // Based upon this https://github.com/stjohnjohnson/mqtt-camera-ftpd/blob/master/server.js
             server.on('client:connected', function(connection) {
@@ -111,7 +121,10 @@ module.exports = function(RED) {
                 });
 
                 // TODO connection.on('close' ...) doesn't work
-                connection._onClose = function() {
+                var defaultOnClose = connection._onClose;
+                connection._onClose = function(hadError) {
+                    var _onClose = defaultOnClose.bind(this);
+                    _onClose(hadError);
                     debug('Client disconnected: ' + remoteClient);
                     indicateIdle();
                 };
