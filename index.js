@@ -38,13 +38,13 @@ module.exports = function(RED) {
 
             var node = this,
                 address = config.ip || ip.address(),
+                dynauth = !node.credentials.username,
+                pasvPortRange = config.passiveportrange.split('-'),
+                pasvPortRangeStart = (pasvPortRange[0] || "").trim() || undefined,
+                pasvPortRangeEnd = (pasvPortRange[1] || "").trim() || pasvPortRangeStart,
                 globalConfig = {
                     debug: false
                 };
-
-            var pasvPortRange = config.passiveportrange.split('-');
-            var pasvPortRangeStart = (pasvPortRange[0] || "").trim() || undefined;
-            var pasvPortRangeEnd = (pasvPortRange[1] || "").trim() || pasvPortRangeStart;
 
             function getGlobalConfig() {
                 return _.assign(globalConfig, node.context().global.get('ftp-server'));
@@ -86,7 +86,7 @@ module.exports = function(RED) {
                 });
 
                 connection.on('command:user', function(user, success, failure) {
-                    if (!user || user !== node.credentials.username) {
+                    if (!dynauth && (!user || user !== node.credentials.username)) {
                         debug('Invalid username: ' + user);
                         node.status({
                             fill: 'red',
@@ -102,22 +102,49 @@ module.exports = function(RED) {
                 });
 
                 connection.on('command:pass', function(pass, success, failure) {
-                    if (!pass || pass !== node.credentials.password) {
-                        debug('Invalid password for user: ' + usr);
-                        node.status({
-                            fill: 'red',
-                            shape: 'dot',
-                            text: 'Invalid password for user: ' + usr
-                        });
-                        return failure();
+                    var authenticate = function(authenticated) {
+                        if (authenticated) {
+                            node.status({
+                                fill: 'green',
+                                shape: 'dot',
+                                text: remoteClient
+                            });
+                            debug('Connected as user: ' + usr);
+                            success(usr, newFSHandler());
+                        } else {
+                            debug('Invalid username or password for user: ' + usr);
+                            node.status({
+                                fill: 'red',
+                                shape: 'dot',
+                                text: 'Invalid login for user: ' + usr
+                            });
+                            failure();
+                        }
                     }
-                    node.status({
-                        fill: 'green',
-                        shape: 'dot',
-                        text: remoteClient
-                    });
-                    debug('Connected as user: ' + usr);
-                    success(usr, newFSHandler());
+
+                    if (!dynauth) {
+                        if (!pass || pass !== node.credentials.password) {
+                            debug('Invalid password for user: ' + usr);
+                            node.status({
+                                fill: 'red',
+                                shape: 'dot',
+                                text: 'Invalid password for user: ' + usr
+                            });
+                            return failure();
+                        }
+                        authenticate(true);
+                    } else {
+                        node.send([
+                            {
+                                payload: {
+                                    username: usr,
+                                    password: pass
+                                },
+                                authenticate: authenticate
+                            },
+                            null
+                        ]);
+                    }
                 });
 
                 // TODO connection.on('close' ...) doesn't work
@@ -167,10 +194,13 @@ module.exports = function(RED) {
                 var handler = {
                     writeFile: function(fileName, file, options, callback) {
                         debug('writeFile: ' + fileName);
-                        node.send({
-                            topic: fileName,
-                            payload: file
-                        });
+                        node.send([
+                            null,
+                            {
+                                topic: fileName,
+                                payload: file
+                            }
+                        ]);
                         vol.writeFile(fileName, file, callback);
                         // Keep our memory usage as low as possible for devices like an older Pi by unlinking
                         // (deleting) files after 5 seconds.

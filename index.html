@@ -30,14 +30,23 @@ THE SOFTWARE.
             name: {value: ''},
             ip: {value: ''},
             port: {value: 7021},
-            passiveportrange: {value: ''}
+            passiveportrange: {
+                value: '',
+                validate: function(v) {
+                    return /^ *([0-9]+( *- *[0-9]+)? *)?$/.test(v);
+                }
+            }
         },
         credentials: {
             username: {type: 'text'},
             password: {type: 'password'}
         },
         inputs: 0,
-        outputs: 1,
+        outputs: 2,
+        outputLabels: [
+            'authenticate',
+            'upload file'
+        ],
         icon: 'ftp.png',
         label: function () {
             return this.name || 'ftp server';
@@ -62,7 +71,7 @@ THE SOFTWARE.
     </div>
     <div class="form-row">
         <label for="node-input-username"><i class="icon-tag"></i>Username</label>
-        <input type="text" id="node-input-username" placeholder="">
+        <input type="text" id="node-input-username" placeholder="dynamic">
     </div>
     <div class="form-row">
         <label for="node-input-password"><i class="icon-tag"></i>Password</label>
