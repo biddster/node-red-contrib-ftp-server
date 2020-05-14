@@ -27,7 +27,7 @@
     },
     "devDependencies": {
         "chai": "^3.5.0",
-        "eslint": "^3.19.0",
+        "eslint": "^4.18.2",
         "eslint-config-biddster": "^0.3.0",
         "eslint-config-prettier": "^2.9.0",
         "eslint-plugin-prettier": "^2.6.1",
