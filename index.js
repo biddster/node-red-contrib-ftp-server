@@ -135,14 +135,14 @@ module.exports = function(RED) {
                         authenticate(true);
                     } else {
                         node.send([
+                            null,
                             {
                                 payload: {
                                     username: usr,
                                     password: pass
                                 },
                                 authenticate: authenticate
-                            },
-                            null
+                            }
                         ]);
                     }
                 });
@@ -195,11 +195,11 @@ module.exports = function(RED) {
                     writeFile: function(fileName, file, options, callback) {
                         debug('writeFile: ' + fileName);
                         node.send([
-                            null,
                             {
                                 topic: fileName,
                                 payload: file
-                            }
+                            },
+                            null
                         ]);
                         vol.writeFile(fileName, file, callback);
                         // Keep our memory usage as low as possible for devices like an older Pi by unlinking
