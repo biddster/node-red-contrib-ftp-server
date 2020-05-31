@@ -1,3 +1,4 @@
+/* eslint-disable prefer-spread */
 /* eslint-disable no-underscore-dangle */
 /**
  The MIT License (MIT)
@@ -67,7 +68,7 @@ module.exports = function (RED) {
                 pasvPortRangeEnd,
             });
 
-            server._logIf = function (verbosity, message, conn) {
+            server._logIf = function (verbosity, message) {
                 debug(`ftpd: ${message}`);
             };
 
@@ -90,12 +91,13 @@ module.exports = function (RED) {
                             shape: 'dot',
                             text: `Invalid username: ${user}`,
                         });
-                        return failure();
+                        failure();
+                    } else {
+                        usr = user;
+                        remoteClient += ` - ${usr}`;
+                        debug(`Connecting as user: ${usr}`);
+                        success();
                     }
-                    usr = user;
-                    remoteClient += ` - ${usr}`;
-                    debug(`Connecting as user: ${usr}`);
-                    success();
                 });
 
                 connection.on('command:pass', function (pass, success, failure) {
@@ -127,9 +129,10 @@ module.exports = function (RED) {
                                 shape: 'dot',
                                 text: `Invalid password for user: ${usr}`,
                             });
-                            return failure();
+                            failure();
+                        } else {
+                            authenticate(true);
                         }
-                        authenticate(true);
                     } else {
                         node.send([
                             null,
@@ -218,9 +221,10 @@ module.exports = function (RED) {
                         debug(`stat: ${file}`);
                         vol.mkdirp(file, function (err1) {
                             if (err1) {
-                                return callback(err1);
+                                callback(err1);
+                            } else {
+                                vol.stat(file, callback);
                             }
-                            vol.stat(file, callback);
                         });
                     },
                     mkdir(dir, opts, callback) {
