@@ -27,16 +27,16 @@ const PromiseFtp = require('promise-ftp');
 const mock = require('node-red-contrib-mock-node');
 const nodeRedModule = require('../index.js');
 
-describe('ftp-server', function () {
-    it('should be tested', function (done) {
+describe('ftp-server', function() {
+    it('should be tested', function(done) {
         const node = mock(
             nodeRedModule,
             {
-                port: 7002,
+                port: 7002
             },
             {
                 username: 'uname',
-                password: 'pword',
+                password: 'pword'
             }
         );
         node.context().global.set('ftp-server', { debug: true });
@@ -46,35 +46,35 @@ describe('ftp-server', function () {
             host: 'localhost',
             user: 'uname',
             password: 'pword',
-            port: 7002,
+            port: 7002
         })
             // This rather odd sequencing is to match the observed behaviours of some IP cameras.
-            .then(function () {
+            .then(function() {
                 return ftp.cwd('/20171007/images/');
             })
-            .then(function () {
+            .then(function() {
                 return ftp.cwd('/20171007/images/');
             })
-            .then(function () {
+            .then(function() {
                 return ftp.mkdir('/20171007/images/');
             })
-            .then(function () {
+            .then(function() {
                 return ftp.mkdir('/20171007/images/');
             })
-            .then(function () {
+            .then(function() {
                 return ftp.put('File content', 'test.remote-copy.txt');
             })
-            .then(function () {
-                const msg = node.sent(0);
+            .then(function() {
+                const msg = node.sent(0)[0];
                 assert.strictEqual(
-                    String.fromCharCode.apply(null, msg.payload),
-                    'File content'
+                    'File content',
+                    String.fromCharCode.apply(null, msg.payload)
                 );
                 assert.strictEqual('/20171007/images/test.remote-copy.txt', msg.topic);
                 return ftp.end().then(done);
             })
-            .catch(function (error) {
-                return ftp.end().then(function () {
+            .catch(function(error) {
+                return ftp.end().then(function() {
                     done(error);
                 });
             });
