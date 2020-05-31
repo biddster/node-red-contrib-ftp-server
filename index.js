@@ -39,9 +39,9 @@ module.exports = function(RED) {
             var node = this,
                 address = config.ip || ip.address(),
                 dynauth = !node.credentials.username,
-                pasvPortRange = config.passiveportrange.split('-'),
-                pasvPortRangeStart = (pasvPortRange[0] || "").trim() || undefined,
-                pasvPortRangeEnd = (pasvPortRange[1] || "").trim() || pasvPortRangeStart,
+                pasvPortRange = (config.passiveportrange || '').split('-'),
+                pasvPortRangeStart = (pasvPortRange[0] || '').trim() || undefined,
+                pasvPortRangeEnd = (pasvPortRange[1] || '').trim() || pasvPortRangeStart,
                 globalConfig = {
                     debug: false
                 };
