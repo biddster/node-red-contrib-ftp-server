@@ -30,14 +30,23 @@ THE SOFTWARE.
             name: {value: ''},
             ip: {value: ''},
             port: {value: 7021},
-            passiveportrange: {value: ''}
+            passiveportrange: {
+                value: '',
+                validate: function(v) {
+                    return /^ *([0-9]+( *- *[0-9]+)? *)?$/.test(v);
+                }
+            }
         },
         credentials: {
             username: {type: 'text'},
             password: {type: 'password'}
         },
         inputs: 0,
-        outputs: 1,
+        outputs: 2,
+        outputLabels: [
+            'upload file',
+            'authenticate'
+        ],
         icon: 'ftp.png',
         label: function () {
             return this.name || 'ftp server';
@@ -62,7 +71,7 @@ THE SOFTWARE.
     </div>
     <div class="form-row">
         <label for="node-input-username"><i class="icon-tag"></i>Username</label>
-        <input type="text" id="node-input-username" placeholder="">
+        <input type="text" id="node-input-username" placeholder="dynamic">
     </div>
     <div class="form-row">
         <label for="node-input-password"><i class="icon-tag"></i>Password</label>
@@ -90,6 +99,23 @@ $ npm install node-red-contrib-ftp-server
 <li>Enter a password of your choosing</li>
 </ul>
 <p><img src="https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/NodeRED.png" alt="NR ftp settings"></p>
+<p>If you leave the username field empty the node uses the dynamic authentication mode. In this mode every login request has to be handled manually. On each login attempt the node outputs an object containing the username, the password and an authenticate function on the "authenticate" output. You can then manually validate the username and password and must call the authenticate function with the parameter true to accept the authentication or false to reject it. Here is an example how an authenticate message would look like:</p>
+<pre><code>{
+    payload: {
+        username: "username",
+        password: "password"
+    },
+    authenticate: <function>
+}
+</code></pre>
+<p>Here is an example how to handle the login attempts in a function node:</p>
+<pre><code>msg.authenticate(
+    msg.payload.username === 'username' &&
+    msg.payload.password === 'password'
+);
+msg.payload = undefined;
+return msg;
+</code></pre>
 <h1 id="configure-a-device-to-use-your-node-red-ftp-server">Configure a device to use your Node-RED FTP server</h1>
 <p>Here&#39;s an example of configuring a Foscam IP camera to upload images into Node-RED:</p>
 <ul>
