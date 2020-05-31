@@ -38,12 +38,17 @@ module.exports = function (RED) {
             const node = this;
             const address = config.ip || ip.address();
             const dynauth = !node.credentials.username;
-            const pasvPortRange = config.passiveportrange.split('-');
-            const pasvPortRangeStart = (pasvPortRange[0] || '').trim() || undefined;
-            const pasvPortRangeEnd = (pasvPortRange[1] || '').trim() || pasvPortRangeStart;
             const globalConfig = {
                 debug: false,
             };
+
+            let pasvPortRangeStart;
+            let pasvPortRangeEnd;
+            if (config.passiveportrange) {
+                const pasvPortRange = config.passiveportrange.split('-');
+                pasvPortRangeStart = (pasvPortRange[0] || '').trim() || undefined;
+                pasvPortRangeEnd = (pasvPortRange[1] || '').trim() || pasvPortRangeStart;
+            }
 
             function getGlobalConfig() {
                 return _.assign(globalConfig, node.context().global.get('ftp-server'));

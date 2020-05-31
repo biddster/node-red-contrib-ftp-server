@@ -67,8 +67,8 @@ describe('ftp-server', function () {
             .then(function () {
                 const msg = node.sent(0);
                 assert.strictEqual(
-                    'File content',
-                    String.fromCharCode.apply(null, msg.payload)
+                    String.fromCharCode.apply(null, msg.payload),
+                    'File content'
                 );
                 assert.strictEqual('/20171007/images/test.remote-copy.txt', msg.topic);
                 return ftp.end().then(done);
