@@ -28,14 +28,25 @@ THE SOFTWARE.
         color: '#f37a33',
         defaults: {
             name: {value: ''},
-            port: {value: 7021}
+            ip: {value: ''},
+            port: {value: 7021},
+            passiveportrange: {
+                value: '',
+                validate: function(v) {
+                    return /^ *([0-9]+( *- *[0-9]+)? *)?$/.test(v);
+                }
+            }
         },
         credentials: {
             username: {type: 'text'},
             password: {type: 'password'}
         },
         inputs: 0,
-        outputs: 1,
+        outputs: 2,
+        outputLabels: [
+            'upload file',
+            'authenticate'
+        ],
         icon: 'ftp.png',
         label: function () {
             return this.name || 'ftp server';
@@ -51,16 +62,24 @@ THE SOFTWARE.
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
+        <label for="node-input-ip"><i class="icon-tag"></i>IP</label>
+        <input type="text" id="node-input-ip" placeholder="auto-detect">
+    </div>
+    <div class="form-row">
         <label for="node-input-port"><i class="icon-tag"></i>Port</label>
         <input type="number" id="node-input-port" placeholder="">
     </div>
     <div class="form-row">
         <label for="node-input-username"><i class="icon-tag"></i>Username</label>
-        <input type="text" id="node-input-username" placeholder="">
+        <input type="text" id="node-input-username" placeholder="dynamic">
     </div>
     <div class="form-row">
         <label for="node-input-password"><i class="icon-tag"></i>Password</label>
         <input type="password" id="node-input-password" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-passiveportrange"><i class="icon-tag"></i>Passive Mode Port Range</label>
+        <input type="text" id="node-input-passiveportrange" placeholder="random">
     </div>
 </script>
 
@@ -80,7 +99,24 @@ $ npm install node-red-contrib-ftp-server
 <li>Enter a password of your choosing</li>
 </ul>
 <p><img src="https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/NodeRED.png" alt="NR ftp settings"></p>
-<h1 id="configure-a-device-to-use-your-node-red-ftp-server">Configure a device to use your Node-RED FTP server</h1>
+<h2 id="dynamic-authentication">Dynamic authentication</h2>
+<p>If you leave the username field empty the node uses the dynamic authentication mode. In this mode every login request has to be handled manually.<br>On each login attempt the node outputs an object containing the username, the password and an authenticate function on the &quot;authenticate&quot; output.<br>You can then manually validate the username and password and must call the authenticate function with the parameter true to accept the authentication or false to reject it.</p>
+<p>Here is an example how an authenticate message would look like:</p>
+<pre><code>{
+    payload: {
+        username: &quot;username&quot;,
+        password: &quot;password&quot;
+    },
+    authenticate: &lt;function&gt;
+}
+</code></pre><p>Here is an example how to handle the login attempts in a function node:</p>
+<pre><code>msg.authenticate(
+    msg.payload.username === &#39;username&#39; &amp;&amp;
+    msg.payload.password === &#39;password&#39;
+);
+msg.payload = undefined;
+return msg;
+</code></pre><h1 id="configure-a-device-to-use-your-node-red-ftp-server">Configure a device to use your Node-RED FTP server</h1>
 <p>Here&#39;s an example of configuring a Foscam IP camera to upload images into Node-RED:</p>
 <ul>
 <li>Enter the IP address of your Node-RED server as the FTP server address</li>
@@ -89,6 +125,8 @@ $ npm install node-red-contrib-ftp-server
 <p>Now you can configure the motion settings of your IP camera to upload images to FTP. </p>
 <p>The images are then emitted from this node as a buffer via <code>msg.payload</code>.</p>
 <p><img src="https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/Foscam.png" alt="Foscam ftp settings"></p>
+<h3 id="enabling-extra-debugging">Enabling extra debugging</h3>
+<p>Install <code>node-red-contrib-config</code> and drag a config node into your workspace. Configure the node to set a global variable called <code>ftp-server</code><br>with a JSON value of <code>{&quot;debug&quot;: true}</code>. Also make sure that the config tickbox for <code>active</code> is unchecked. Redeploy. Now click the button on the config node.<br>This will trigger all instances of <code>ftp-server</code> to write extra logging to the os syslog next time they&#39;re invoked.</p>
 <h1 id="todo">TODO</h1>
 <ul>
 <li>TLS support</li>

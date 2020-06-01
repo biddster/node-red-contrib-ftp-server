@@ -20,6 +20,31 @@ Drag the FTP Server node into your workspace and double click to configure:
 
 ![NR ftp settings](https://raw.githubusercontent.com/biddster/node-red-contrib-ftp-server/develop/doc/NodeRED.png)
 
+## Dynamic authentication
+If you leave the username field empty the node uses the dynamic authentication mode. In this mode every login request has to be handled manually.
+On each login attempt the node outputs an object containing the username, the password and an authenticate function on the "authenticate" output.
+You can then manually validate the username and password and must call the authenticate function with the parameter true to accept the authentication or false to reject it.
+
+
+Here is an example how an authenticate message would look like:
+```
+{
+    payload: {
+        username: "username",
+        password: "password"
+    },
+    authenticate: <function>
+}
+```
+Here is an example how to handle the login attempts in a function node:
+```
+msg.authenticate(
+    msg.payload.username === 'username' &&
+    msg.payload.password === 'password'
+);
+msg.payload = undefined;
+return msg;
+```
 
 # Configure a device to use your Node-RED FTP server
 
