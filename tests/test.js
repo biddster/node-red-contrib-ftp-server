@@ -27,16 +27,17 @@ const PromiseFtp = require('promise-ftp');
 const mock = require('node-red-contrib-mock-node');
 const nodeRedModule = require('../index.js');
 
-describe('ftp-server', function() {
-    it('should be tested', function(done) {
+describe('ftp-server', function () {
+    this.timeout(15000);
+    it('should be tested', function (done) {
         const node = mock(
             nodeRedModule,
             {
-                port: 7002
+                port: 7002,
             },
             {
                 username: 'uname',
-                password: 'pword'
+                password: 'pword',
             }
         );
         node.context().global.set('ftp-server', { debug: true });
@@ -46,35 +47,50 @@ describe('ftp-server', function() {
             host: 'localhost',
             user: 'uname',
             password: 'pword',
-            port: 7002
+            port: 7002,
         })
             // This rather odd sequencing is to match the observed behaviours of some IP cameras.
-            .then(function() {
+            .then(function () {
                 return ftp.cwd('/20171007/images/');
             })
-            .then(function() {
+            .then(function () {
                 return ftp.cwd('/20171007/images/');
             })
-            .then(function() {
+            .then(function () {
                 return ftp.mkdir('/20171007/images/');
             })
-            .then(function() {
+            .then(function () {
                 return ftp.mkdir('/20171007/images/');
             })
-            .then(function() {
+            .then(function () {
                 return ftp.put('File content', 'test.remote-copy.txt');
             })
-            .then(function() {
+            // .then(function () {
+            //     return ftp.list('/20171007/images/');
+            // })
+            .then(function () {
+                // console.log(listed);
+
                 const msg = node.sent(0)[0];
                 assert.strictEqual(
-                    'File content',
-                    String.fromCharCode.apply(null, msg.payload)
+                    String.fromCharCode.apply(null, msg.payload),
+                    'File content'
                 );
                 assert.strictEqual('/20171007/images/test.remote-copy.txt', msg.topic);
-                return ftp.end().then(done);
+                return ftp.end().then(() => {
+                    // Files are unlinked (deleted) after 5 seconds so we wait
+                    // 6 seconds so that can happen. We don't currently test that
+                    // the file has gone, but we do at least see it in the
+                    // test coverage.
+                    console.log('Waiting for unlink');
+                    setTimeout(() => {
+                        node.emit('close');
+                        done();
+                    }, 6000);
+                });
             })
-            .catch(function(error) {
-                return ftp.end().then(function() {
+            .catch(function (error) {
+                return ftp.end().then(function () {
                     done(error);
                 });
             });
