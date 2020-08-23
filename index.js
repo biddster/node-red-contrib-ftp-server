@@ -243,7 +243,6 @@ module.exports = function (RED) {
             });
 
             indicateIdle();
-            // FUNCTIONS
         },
         {
             credentials: {
