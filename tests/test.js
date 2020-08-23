@@ -1,3 +1,6 @@
+/* eslint-disable prefer-arrow-callback */
+/* eslint-disable no-undef */
+'use strict';
 /**
  The MIT License (MIT)
 
@@ -22,16 +25,16 @@
  THE SOFTWARE.
  */
 
-const assert = require('assert');
+const Assert = require('assert');
 const PromiseFtp = require('promise-ftp');
-const mock = require('node-red-contrib-mock-node');
-const nodeRedModule = require('../index.js');
+const Mock = require('node-red-contrib-mock-node');
+const NodeRedModule = require('../index.js');
 
 describe('ftp-server', function () {
     this.timeout(15000);
     it('should be tested', function (done) {
-        const node = mock(
-            nodeRedModule,
+        const node = Mock(
+            NodeRedModule,
             {
                 port: 7002,
             },
@@ -72,11 +75,11 @@ describe('ftp-server', function () {
                 // console.log(listed);
 
                 const msg = node.sent(0)[0];
-                assert.strictEqual(
+                Assert.strictEqual(
                     String.fromCharCode.apply(null, msg.payload),
                     'File content'
                 );
-                assert.strictEqual('/20171007/images/test.remote-copy.txt', msg.topic);
+                Assert.strictEqual('/20171007/images/test.remote-copy.txt', msg.topic);
                 return ftp.end().then(() => {
                     // Files are unlinked (deleted) after 5 seconds so we wait
                     // 6 seconds so that can happen. We don't currently test that
