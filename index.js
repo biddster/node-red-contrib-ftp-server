@@ -26,7 +26,7 @@
 
 module.exports = function (RED) {
     const _ = require('lodash');
-    const { FtpServer } = require('ftpd');
+    const { FtpServer } = require('@svrooij/ftpd');
     const ip = require('ip');
     const memfs = require('memfs');
 

@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-ftp-server",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "description": "NodeRED modules that provides an ftp server so file writes can be handled in a NodeRED flow",
     "main": "index.js",
     "scripts": {
@@ -74,7 +74,7 @@
         ]
     },
     "dependencies": {
-        "ftpd": "git+https://github.com/biddster/nodeftpd.git",
+        "@svrooij/ftpd": "^0.4.4",
         "ip": "^1.1.5",
         "lodash": "^4.17.20",
         "memfs": "^3.2.0"
