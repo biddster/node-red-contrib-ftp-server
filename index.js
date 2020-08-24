@@ -1,7 +1,6 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable prefer-spread */
 /* eslint-disable consistent-this */
-'use strict';
 /**
  The MIT License (MIT)
 
