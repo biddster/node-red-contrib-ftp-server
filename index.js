@@ -1,5 +1,6 @@
+/* eslint-disable prefer-rest-params */
 /* eslint-disable prefer-spread */
-/* eslint-disable no-underscore-dangle */
+/* eslint-disable consistent-this */
 /**
  The MIT License (MIT)
 
@@ -26,9 +27,9 @@
 
 module.exports = function (RED) {
     const _ = require('lodash');
-    const { FtpServer } = require('ftpd');
-    const ip = require('ip');
-    const memfs = require('memfs');
+    const { FtpServer } = require('@svrooij/ftpd');
+    const IP = require('ip');
+    const MemFS = require('memfs');
 
     RED.nodes.registerType(
         'ftp-server',
@@ -36,7 +37,7 @@ module.exports = function (RED) {
             RED.nodes.createNode(this, config);
 
             const node = this;
-            const address = config.ip || ip.address();
+            const address = config.ip || IP.address();
             const dynauth = !node.credentials.username;
             const pasvPortRange = (config.passiveportrange || '').split('-');
             const pasvPortRangeStart = (pasvPortRange[0] || '').trim() || undefined;
@@ -45,24 +46,26 @@ module.exports = function (RED) {
                 debug: false,
             };
 
-            function getGlobalConfig() {
+            const getGlobalConfig = function () {
                 return _.assign(globalConfig, node.context().global.get('ftp-server'));
-            }
+            };
 
-            function debug() {
-                if (getGlobalConfig().debug) node.log.apply(node, arguments);
-            }
+            const debug = function () {
+                if (getGlobalConfig().debug) {
+                    node.log.apply(node, arguments);
+                }
+            };
 
-            function indicateIdle() {
+            const indicateIdle = function () {
                 node.status({
                     fill: 'blue',
                     shape: 'ring',
                     text: `${address}:${config.port} - IDLE`,
                 });
-            }
+            };
 
-            function newFSHandler() {
-                const vol = memfs.Volume.fromJSON({});
+            const newFSHandler = function () {
+                const vol = MemFS.Volume.fromJSON({});
                 const handler = {
                     writeFile(fileName, file, options, callback) {
                         debug(`writeFile: ${fileName}`);
@@ -76,8 +79,8 @@ module.exports = function (RED) {
                         vol.writeFile(fileName, file, callback);
                         // Keep our memory usage as low as possible for devices like an older Pi by unlinking
                         // (deleting) files after 5 seconds.
-                        setTimeout(function () {
-                            vol.unlink(fileName, function (err) {
+                        setTimeout(() => {
+                            vol.unlink(fileName, (err) => {
                                 if (err && err.code !== 'ENOENT') {
                                     node.error(err);
                                 } else {
@@ -90,7 +93,7 @@ module.exports = function (RED) {
                         // It streamlines the process of uploading images if we respond that every directory
                         // exists and silently create the directory when it doesn't.
                         debug(`stat: ${file}`);
-                        vol.mkdirp(file, function (err1) {
+                        vol.mkdirp(file, (err1) => {
                             if (err1) {
                                 callback(err1);
                             } else {
@@ -104,7 +107,7 @@ module.exports = function (RED) {
                     },
                 };
                 ['open', 'close', 'rename', 'unlink', 'readdir', 'rmdir', 'readFile'].forEach(
-                    function (method) {
+                    (method) => {
                         handler[method] = function (arg) {
                             debug(`${method}: ${arg}`);
                             vol[method].apply(vol, arguments);
@@ -112,7 +115,7 @@ module.exports = function (RED) {
                     }
                 );
                 return handler;
-            }
+            };
 
             debug(`Starting ftp server: ${address}:${config.port}`);
 
@@ -134,7 +137,7 @@ module.exports = function (RED) {
             };
 
             // Based upon this https://github.com/stjohnjohnson/mqtt-camera-ftpd/blob/master/server.js
-            server.on('client:connected', function (connection) {
+            server.on('client:connected', (connection) => {
                 let remoteClient = `${connection.socket.remoteAddress}:${connection.socket.remotePort}`;
                 let usr = '';
                 debug(`Remote connection: ${remoteClient}`);
@@ -144,7 +147,7 @@ module.exports = function (RED) {
                     text: remoteClient,
                 });
 
-                connection.on('command:user', function (user, success, failure) {
+                connection.on('command:user', (user, success, failure) => {
                     if (!dynauth && (!user || user !== node.credentials.username)) {
                         debug(`Invalid username: ${user}`);
                         node.status({
@@ -161,7 +164,7 @@ module.exports = function (RED) {
                     }
                 });
 
-                connection.on('command:pass', function (pass, success, failure) {
+                connection.on('command:pass', (pass, success, failure) => {
                     const authenticate = function (authenticated) {
                         if (authenticated) {
                             node.status({
@@ -217,7 +220,7 @@ module.exports = function (RED) {
                     indicateIdle();
                 };
 
-                connection.on('error', function (error) {
+                connection.on('error', (error) => {
                     node.error(
                         'remoteClient %s had an error: %s',
                         remoteClient,
@@ -233,13 +236,12 @@ module.exports = function (RED) {
 
             server.listen(config.port);
 
-            node.on('close', function () {
+            node.on('close', () => {
                 debug('Closing down ftp server');
                 server.close();
             });
 
             indicateIdle();
-            // FUNCTIONS
         },
         {
             credentials: {
