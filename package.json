@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-ftp-server",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "NodeRED modules that provides an ftp server so file writes can be handled in a NodeRED flow",
     "main": "index.js",
     "scripts": {
